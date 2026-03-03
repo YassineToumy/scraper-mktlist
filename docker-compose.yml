@@ -1,0 +1,9 @@
+services:
+  mktlist:
+    build: .
+    container_name: scraper-mktlist
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./logs:/app/logs
