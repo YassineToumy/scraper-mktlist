@@ -3,7 +3,14 @@ services:
     build: .
     container_name: scraper-mktlist
     restart: unless-stopped
-    env_file:
-      - .env
+    environment:
+      - MONGODB_URI=${MONGODB_URI}
+      - MONGO_MKTLIST_DB=${MONGO_MKTLIST_DB:-mktlist}
+      - MONGO_MKTLIST_COL=${MONGO_MKTLIST_COL:-locations}
+      - POSTGRES_DSN=${POSTGRES_DSN}
+      - PG_TABLE_MKTLIST=${PG_TABLE_MKTLIST:-mktlist_listings}
+      - PG_ARCHIVE_MKTLIST=${PG_ARCHIVE_MKTLIST:-mktlist_archive}
+      - BATCH_SIZE=${BATCH_SIZE:-500}
+      - CYCLE_SLEEP=${CYCLE_SLEEP:-86400}
     volumes:
       - ./logs:/app/logs
