@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+
 
 echo "══════════════════════════════════════════════════"
 echo "🇨🇦 MktList Service Starting"
@@ -50,8 +50,8 @@ conn.close()
 echo ""
 echo "🔄 Running initial jobs on startup..."
 
-/app/runner.sh scraper
-/app/runner.sh sync
+/app/runner.sh scraper || echo "⚠️  Scraper startup failed — will retry via cron"
+/app/runner.sh sync || echo "⚠️  Sync startup failed — will retry via cron"
 
 echo "══════════════════════════════════════════════════"
 echo "✅ Startup complete — cron daemon starting"
