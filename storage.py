@@ -23,6 +23,14 @@ log = logging.getLogger("storage")
 
 _s3_client = None
 
+# Referer per source to bypass hotlink protection
+REFERERS = {
+    "propertyfinder": "https://www.propertyfinder.eg/",
+    "mubawab":        "https://www.mubawab.tn/",
+    "mktlist":        "https://www.mktlist.ca/",
+    "bienici":        "https://www.bienici.com/",
+}
+
 
 def _get_s3():
     global _s3_client
@@ -40,7 +48,7 @@ def _b2_configured():
     return bool(B2_KEY_ID and B2_APPLICATION_KEY)
 
 
-def _make_key(source: str, ad_id: str, img_url: str, index: int) -> str:
+def _make_key(source, ad_id, img_url, index):
     ext = img_url.split("?")[0].rsplit(".", 1)[-1].lower()
     if ext not in ("jpg", "jpeg", "png", "webp", "gif", "avif"):
         ext = "jpg"
@@ -48,16 +56,12 @@ def _make_key(source: str, ad_id: str, img_url: str, index: int) -> str:
     return f"{source}/{ad_id}/{index:03d}_{url_hash}.{ext}"
 
 
-def _public_url(key: str) -> str:
+def _public_url(key):
     return f"{B2_ENDPOINT}/{B2_BUCKET}/{key}"
 
 
-def upload_image(source: str, ad_id: str, img_url: str, index: int = 0, timeout: int = 20) -> str:
-    """
-    Upload one image to B2. Returns B2 public URL.
-    Falls back to original URL on any failure.
-    Skips upload if image already exists in B2.
-    """
+def upload_image(source, ad_id, img_url, index=0, timeout=20):
+    """Upload one image to B2. Returns B2 URL or original URL on failure."""
     if not _b2_configured() or not img_url:
         return img_url
 
@@ -65,17 +69,22 @@ def upload_image(source: str, ad_id: str, img_url: str, index: int = 0, timeout:
         s3 = _get_s3()
         key = _make_key(source, str(ad_id), img_url, index)
 
-        # Check if already uploaded — skip re-upload
+        # Already uploaded — reuse
         try:
             s3.head_object(Bucket=B2_BUCKET, Key=key)
             return _public_url(key)
         except ClientError:
-            pass  # Not yet uploaded, proceed
+            pass
 
-        # Download from source
-        resp = requests.get(img_url, timeout=timeout, stream=True, headers={
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-        })
+        # Download with proper Referer to bypass hotlink protection
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                          "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            "Accept": "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Referer": REFERERS.get(source, ""),
+        }
+        resp = requests.get(img_url, timeout=timeout, stream=True, headers=headers)
         resp.raise_for_status()
         content_type = resp.headers.get("Content-Type", "image/jpeg").split(";")[0]
         data = resp.content
@@ -83,25 +92,16 @@ def upload_image(source: str, ad_id: str, img_url: str, index: int = 0, timeout:
         if not data:
             return img_url
 
-        # Upload to B2
-        s3.put_object(
-            Bucket=B2_BUCKET,
-            Key=key,
-            Body=data,
-            ContentType=content_type,
-        )
+        s3.put_object(Bucket=B2_BUCKET, Key=key, Body=data, ContentType=content_type)
         return _public_url(key)
 
     except Exception as e:
         log.warning(f"B2 upload failed for {img_url[:80]}: {e}")
-        return img_url  # fallback to original URL
+        return img_url
 
 
-def upload_images(source: str, ad_id: str, img_urls: list, timeout: int = 20) -> list:
-    """
-    Upload multiple images to B2. Returns list of B2 URLs.
-    Falls back to original URL for each failed upload.
-    """
+def upload_images(source, ad_id, img_urls, timeout=20):
+    """Upload multiple images. Returns list of B2 URLs (fallback to original on failure)."""
     if not img_urls:
         return []
     return [
