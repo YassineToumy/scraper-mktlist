@@ -17,7 +17,7 @@ load_dotenv()
 B2_KEY_ID = os.getenv("B2_KEY_ID", "")
 B2_APPLICATION_KEY = os.getenv("B2_APPLICATION_KEY", "")
 B2_ENDPOINT = os.getenv("B2_ENDPOINT", "https://s3.us-east-005.backblazeb2.com")
-B2_BUCKET = os.getenv("B2_BUCKET", "immo-world")
+B2_BUCKET = os.getenv("B2_BUCKET", "immo-world-bucket")
 
 log = logging.getLogger("storage")
 
