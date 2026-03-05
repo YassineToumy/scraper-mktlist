@@ -11,6 +11,7 @@ import random
 from pymongo import MongoClient
 from urllib.parse import urljoin
 from dotenv import load_dotenv
+from storage import upload_images
 
 load_dotenv()
 
@@ -300,7 +301,7 @@ def parse_listing_detail(url):
         "property_details": property_details,
         "rooms": rooms,
         "features": features,
-        "images": images,
+        "images": upload_images("mktlist", mkt_id or url, images),
         "scraped_at": time.time()
     }
 
