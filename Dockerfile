@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY scraper.py sync.py storage.py ./
+COPY scraper.py cleaner.py sync.py storage.py ./
 COPY entrypoint.sh /entrypoint.sh
 COPY runner.sh ./
 

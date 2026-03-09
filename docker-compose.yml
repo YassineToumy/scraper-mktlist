@@ -7,6 +7,7 @@ services:
       - MONGODB_URI=${MONGODB_URI}
       - MONGO_MKTLIST_DB=${MONGO_MKTLIST_DB:-mktlist}
       - MONGO_MKTLIST_COL=${MONGO_MKTLIST_COL:-locations}
+      - MONGO_MKTLIST_COL_CLEAN=${MONGO_MKTLIST_COL_CLEAN:-locations_clean}
       - POSTGRES_DSN=${POSTGRES_DSN}
       - PG_TABLE_MKTLIST=${PG_TABLE_MKTLIST:-mktlist_listings}
       - PG_ARCHIVE_MKTLIST=${PG_ARCHIVE_MKTLIST:-mktlist_archive}

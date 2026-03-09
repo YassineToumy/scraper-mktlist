@@ -1,7 +1,7 @@
 #!/bin/bash
 set -uo pipefail
 
-set -a; source /etc/environment 2>/dev/null || true; set +a
+source /app/.env_runtime 2>/dev/null || source /etc/environment 2>/dev/null || true
 
 JOB="$1"
 TIMESTAMP=$(date -u +"%Y-%m-%d_%H-%M-%S")
@@ -17,17 +17,21 @@ if [ -f "$PIDFILE" ] && kill -0 "$(cat $PIDFILE)" 2>/dev/null; then
     exit 0
 fi
 
+echo $$ > "$PIDFILE"
 cd /app
 
 case "$JOB" in
     scraper)
         python -u scraper.py 2>&1 | tee "$LOGFILE"
         ;;
+    cleaner)
+        python -u cleaner.py 2>&1 | tee "$LOGFILE"
+        ;;
     sync)
         python -u sync.py 2>&1 | tee "$LOGFILE"
         ;;
     *)
-        echo "❌ Unknown job: ${JOB}. Use: scraper | sync"
+        echo "❌ Unknown job: ${JOB}. Use: scraper | cleaner | sync"
         exit 1
         ;;
 esac
