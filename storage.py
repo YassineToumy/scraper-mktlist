@@ -61,7 +61,7 @@ def _public_url(key):
 
 
 def upload_image(source, ad_id, img_url, index=0, timeout=20):
-    """Upload one image to B2. Returns B2 URL or original URL on failure."""
+    """Upload one image to B2. Returns B2 URL, original URL on transient failure, or None if gone."""
     if not _b2_configured() or not img_url:
         return img_url
 
@@ -90,22 +90,31 @@ def upload_image(source, ad_id, img_url, index=0, timeout=20):
         data = resp.content
 
         if not data:
-            return img_url
+            return None
 
         s3.put_object(Bucket=B2_BUCKET, Key=key, Body=data, ContentType=content_type)
         return _public_url(key)
 
+    except requests.HTTPError as e:
+        # 4xx = image is gone (expired CDN token, removed listing) — skip it
+        if e.response is not None and 400 <= e.response.status_code < 500:
+            log.debug(f"Image gone ({e.response.status_code}), skipping: {img_url[:80]}")
+            return None
+        # 5xx / other HTTP errors — fall back to original URL
+        log.warning(f"B2 upload failed for {img_url[:80]}: {e}")
+        return img_url
     except Exception as e:
         log.warning(f"B2 upload failed for {img_url[:80]}: {e}")
         return img_url
 
 
 def upload_images(source, ad_id, img_urls, timeout=20):
-    """Upload multiple images. Returns list of B2 URLs (fallback to original on failure)."""
+    """Upload multiple images. Returns list of B2 URLs (skips images that are gone)."""
     if not img_urls:
         return []
-    return [
+    results = [
         upload_image(source, ad_id, url, index=i, timeout=timeout)
         for i, url in enumerate(img_urls)
         if url
     ]
+    return [r for r in results if r]
