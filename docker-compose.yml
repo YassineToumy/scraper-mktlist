@@ -3,6 +3,8 @@ services:
     build: .
     container_name: scraper-mktlist
     restart: unless-stopped
+    env_file:
+      - ../.env
     environment:
       - MONGODB_URI=${MONGODB_URI}
       - MONGO_MKTLIST_DB=${MONGO_MKTLIST_DB:-mktlist}
