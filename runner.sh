@@ -27,11 +27,8 @@ case "$JOB" in
     cleaner)
         python -u cleaner.py 2>&1 | tee "$LOGFILE"
         ;;
-    sync)
-        python -u sync.py 2>&1 | tee "$LOGFILE"
-        ;;
     *)
-        echo "❌ Unknown job: ${JOB}. Use: scraper | cleaner | sync"
+        echo "❌ Unknown job: ${JOB}. Use: scraper | cleaner"
         exit 1
         ;;
 esac

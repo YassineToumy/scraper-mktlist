@@ -8,9 +8,6 @@ services:
       - MONGO_MKTLIST_DB=${MONGO_MKTLIST_DB:-mktlist}
       - MONGO_MKTLIST_COL=${MONGO_MKTLIST_COL:-locations}
       - MONGO_MKTLIST_COL_CLEAN=${MONGO_MKTLIST_COL_CLEAN:-locations_clean}
-      - POSTGRES_DSN=${POSTGRES_DSN}
-      - PG_TABLE_MKTLIST=${PG_TABLE_MKTLIST:-mktlist_listings}
-      - PG_ARCHIVE_MKTLIST=${PG_ARCHIVE_MKTLIST:-mktlist_archive}
       - BATCH_SIZE=${BATCH_SIZE:-500}
       - CYCLE_SLEEP=${CYCLE_SLEEP:-86400}
       - B2_KEY_ID=${B2_KEY_ID}
