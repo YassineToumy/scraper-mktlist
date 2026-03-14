@@ -13,6 +13,8 @@ Usage:
 
 import os
 import re
+import html
+import unicodedata
 import argparse
 from datetime import datetime, timezone
 from pymongo import MongoClient, UpdateOne, ASCENDING
@@ -92,11 +94,16 @@ def parse_surface_sqft(details: dict) -> float | None:
     return None
 
 
-def clean_description(text: str | None) -> str | None:
-    if not text:
+def clean_description(raw: str | None) -> str | None:
+    """Strip HTML, decode entities, normalize accents."""
+    if not raw:
         return None
+    text = re.sub(r"<[^>]+>", " ", raw)
+    text = html.unescape(text)
+    text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
     text = re.sub(r"[ \t]+", " ", text)
-    text = re.sub(r"\n{3,}", "\n\n", text).strip()
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    text = text.strip()
     return text if len(text) > 20 else None
 
 
